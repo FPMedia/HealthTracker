@@ -1,12 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
+import SleepTracker from './Components/SleepTracker';
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open  app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaView style={styles.container}>
+      <SleepTracker />
+    </SafeAreaView>
   );
 }
 
