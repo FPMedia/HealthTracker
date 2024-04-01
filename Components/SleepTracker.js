@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Button, Text, StyleSheet } from 'react-native';
+import { View, Button, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SleepTracker = () => {
-    const [sleepTime, setSleepTime] = useState(new Date());
-    const [wakeTime, setWakeTime] = useState(new Date());
+    const [sleepTime, setSleepTime] = useState(null);
+    const [wakeTime, setWakeTime] = useState(null);
     const [showPicker, setShowPicker] = useState(false);
     const [currentPicker, setCurrentPicker] = useState(null); // 'sleep' or 'wake'
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState('');
 
     useEffect(() => {
         loadTimes();
@@ -21,17 +23,22 @@ const SleepTracker = () => {
     };
 
     const saveTimes = async () => {
+        setIsSaving(true); // Show spinner
         await AsyncStorage.setItem('sleepTime', sleepTime.toISOString());
         await AsyncStorage.setItem('wakeTime', wakeTime.toISOString());
+        setIsSaving(false); // Hide spinner
+        setSaveMessage('Times saved successfully!');
+        setTimeout(() => setSaveMessage(''), 3000); // Clear message after 3 seconds
     };
 
     const formatDate = (date) => {
-        return `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        return date ? `${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : '';
     };
 
     const onChange = (event, selectedDate) => {
-        let currentDate = selectedDate || (currentPicker === 'sleep' ? sleepTime : wakeTime);
+        let currentDate = selectedDate;
         setShowPicker(false);
+        if (!currentDate) return; // Exit if the change was dismissed
 
         if (currentPicker === 'sleep') {
             setSleepTime(currentDate);
@@ -64,13 +71,14 @@ const SleepTracker = () => {
                 <Button
                     onPress={saveTimes}
                     title="Save"
-                    style={styles.button} // Assuming you want the button styled similarly to the others
+                    disabled={!(sleepTime && wakeTime)} // Disabled unless both times are set
+                    style={styles.button}
                 />
             </View>
             {showPicker && (
                 <DateTimePicker
                     testID="dateTimePicker"
-                    value={currentPicker === 'sleep' ? sleepTime : wakeTime}
+                    value={new Date()}
                     mode={'time'}
                     is24Hour={true}
                     display="default"
@@ -81,6 +89,8 @@ const SleepTracker = () => {
                 <Text style={styles.timeText}>Sleep Time: {formatDate(sleepTime)}</Text>
                 <Text style={styles.timeText}>Wake Time: {formatDate(wakeTime)}</Text>
             </View>
+            {isSaving && <ActivityIndicator size="large" />}
+            {saveMessage !== '' && <Text style={styles.saveMessage}>{saveMessage}</Text>}
         </View>
     );
 };
@@ -106,8 +116,7 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     button: {
-        height: 60, // Adjusted height of the buttons
-        width: '40%', // Adjusted width of the buttons
+        // Add styles as needed
     },
     timeContainer: {
         marginTop: 20,
@@ -116,12 +125,10 @@ const styles = StyleSheet.create({
     timeText: {
         marginBottom: 10,
     },
+    saveMessage: {
+        marginTop: 20,
+        color: 'green',
+    },
 });
 
 export default SleepTracker;
-
-
-
-
-
-
